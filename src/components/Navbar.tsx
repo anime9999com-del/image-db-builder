@@ -13,21 +13,21 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
-      <nav className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-border/30 bg-background/60 backdrop-blur-2xl">
+      <nav className="container flex h-18 items-center justify-between">
+        <Link to="/" className="flex items-center group">
           <Logo />
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
-          <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+        <div className="hidden md:flex items-center gap-1 bg-secondary/40 rounded-full px-2 py-1.5 backdrop-blur-sm border border-border/30">
+          <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all px-4 py-2 rounded-full">
             Home
           </Link>
-          <Link to="/find-listener" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/find-listener" className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all px-4 py-2 rounded-full">
             Find a Listener
           </Link>
           {user && (
-            <Link to="/bookings" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/bookings" className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all px-4 py-2 rounded-full">
               My Bookings
             </Link>
           )}

@@ -55,10 +55,12 @@
     --gradient-primary: linear-gradient(135deg, hsl(199 89% 60%) 0%, hsl(199 89% 45%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(32 95% 55%) 0%, hsl(32 95% 45%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(210 18% 14%) 0%, hsl(210 18% 10%) 100%);
+    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(199 89% 60% / 0.15), transparent);
     
     /* Shadows */
     --shadow-glow: 0 0 30px hsl(199 89% 60% / 0.15);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.25);
+    --shadow-elevated: 0 20px 60px hsl(0 0% 0% / 0.4);
   }
 
   .dark {
@@ -105,6 +107,11 @@
     box-shadow: var(--shadow-card);
   }
   
+  .glass-card-elevated {
+    @apply bg-card/90 backdrop-blur-2xl border border-border/40 rounded-2xl;
+    box-shadow: var(--shadow-elevated);
+  }
+  
   .glow-primary {
     box-shadow: var(--shadow-glow);
   }
@@ -112,6 +119,25 @@
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
+  }
+  
+  .bg-mesh {
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(199 89% 60% / 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 50%, hsl(32 95% 55% / 0.08), transparent),
+      radial-gradient(ellipse 50% 30% at 0% 80%, hsl(199 89% 60% / 0.06), transparent);
+  }
+  
+  .bg-grid {
+    background-image: 
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  
+  .floating-orb {
+    @apply absolute rounded-full blur-3xl opacity-30 pointer-events-none;
+    animation: float 6s ease-in-out infinite;
   }
 }
 

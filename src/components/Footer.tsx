@@ -4,8 +4,10 @@ import { Lock } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 bg-background/50">
-      <div className="container py-12">
+    <footer className="border-t border-border/30 bg-card/30 backdrop-blur-xl relative overflow-hidden">
+      {/* Subtle gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none" />
+      <div className="container py-16 relative">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-4">
             <Logo />
