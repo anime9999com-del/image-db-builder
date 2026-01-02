@@ -2,9 +2,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Logo } from './Logo';
 import { Button } from './ui/button';
 import { useAuth } from '@/lib/auth';
+import { Shield } from 'lucide-react';
 
 export function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -29,6 +30,12 @@ export function Navbar() {
           {user && (
             <Link to="/bookings" className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all px-4 py-2 rounded-full">
               My Bookings
+            </Link>
+          )}
+          {isAdmin && (
+            <Link to="/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all px-4 py-2 rounded-full flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" />
+              Admin
             </Link>
           )}
         </div>
