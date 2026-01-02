@@ -9,7 +9,10 @@ import {
   Plus,
   Edit,
   Trash2,
-  Save
+  Save,
+  UserCog,
+  ShieldCheck,
+  ShieldX
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +52,14 @@ interface SiteContent {
   content: any;
 }
 
+interface UserWithRole {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  isAdmin: boolean;
+}
+
 export default function Admin() {
   const { user, isAdmin, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -57,6 +68,7 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [listeners, setListeners] = useState<Listener[]>([]);
   const [siteContent, setSiteContent] = useState<SiteContent[]>([]);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingListener, setEditingListener] = useState<Listener | null>(null);
   const [editingContent, setEditingContent] = useState<SiteContent | null>(null);
@@ -87,9 +99,55 @@ export default function Admin() {
       .from('site_content')
       .select('*');
 
+    // Fetch all users with their roles
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('id, user_id, full_name, email');
+    
+    const { data: rolesData } = await supabase
+      .from('user_roles')
+      .select('user_id, role');
+
+    // Combine profiles with role info
+    const usersWithRoles: UserWithRole[] = (profilesData || []).map(profile => ({
+      ...profile,
+      isAdmin: rolesData?.some(r => r.user_id === profile.user_id && r.role === 'admin') || false
+    }));
+
     setListeners(listenersData || []);
     setSiteContent(contentData || []);
+    setUsers(usersWithRoles);
     setLoading(false);
+  };
+
+  const toggleAdminRole = async (userProfile: UserWithRole) => {
+    if (userProfile.isAdmin) {
+      // Remove admin role
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userProfile.user_id)
+        .eq('role', 'admin');
+      
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Admin role removed', description: `${userProfile.full_name || userProfile.email} is no longer an admin` });
+        fetchData();
+      }
+    } else {
+      // Add admin role
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({ user_id: userProfile.user_id, role: 'admin' });
+      
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Admin role granted', description: `${userProfile.full_name || userProfile.email} is now an admin` });
+        fetchData();
+      }
+    }
   };
 
   const handleSignOut = async () => {
@@ -203,6 +261,17 @@ export default function Admin() {
           >
             <FileText className="w-5 h-5" />
             Site Content
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'users' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            <UserCog className="w-5 h-5" />
+            User Roles
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -359,6 +428,74 @@ export default function Admin() {
                   </pre>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">User Roles Management</h1>
+              <p className="text-sm text-muted-foreground">
+                {users.filter(u => u.isAdmin).length} admins / {users.length} total users
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {users.map((userProfile) => (
+                <div key={userProfile.id} className="glass-card p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0">
+                    {(userProfile.full_name || userProfile.email || 'U')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{userProfile.full_name || 'No name'}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{userProfile.email}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
+                      userProfile.isAdmin 
+                        ? 'bg-primary/20 text-primary' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {userProfile.isAdmin ? (
+                        <>
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Admin
+                        </>
+                      ) : (
+                        'User'
+                      )}
+                    </span>
+                    {userProfile.user_id !== user?.id && (
+                      <Button 
+                        size="sm"
+                        variant={userProfile.isAdmin ? "destructive" : "default"}
+                        onClick={() => toggleAdminRole(userProfile)}
+                      >
+                        {userProfile.isAdmin ? (
+                          <>
+                            <ShieldX className="w-4 h-4 mr-1" />
+                            Remove Admin
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="w-4 h-4 mr-1" />
+                            Grant Admin
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    {userProfile.user_id === user?.id && (
+                      <span className="text-xs text-muted-foreground italic">You</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {users.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No registered users found
+                </div>
+              )}
             </div>
           </div>
         )}
