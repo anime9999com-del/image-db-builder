@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/Logo';
+import { BackgroundEffects } from '@/components/BackgroundEffects';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -84,14 +85,15 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border/50 p-4">
+    <div className="min-h-screen flex flex-col">
+      <BackgroundEffects />
+      <header className="border-b border-border/50 p-4 relative z-10">
         <Link to="/">
           <Logo />
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="glass-card w-full max-w-md p-8 animate-fade-in">
           <div className="flex justify-center mb-6">
             {mode === 'signup' ? (

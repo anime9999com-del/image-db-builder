@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Video, Phone } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { BackgroundEffects } from '@/components/BackgroundEffects';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -64,6 +65,7 @@ export default function Bookings() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <BackgroundEffects />
       <Navbar />
       
       <main className="flex-1 container py-12">

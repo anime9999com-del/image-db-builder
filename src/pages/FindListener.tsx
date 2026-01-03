@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import { BackgroundEffects } from '@/components/BackgroundEffects';
 import { ListenerCard } from '@/components/ListenerCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -89,6 +90,7 @@ export default function FindListener() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <BackgroundEffects />
       <Navbar />
       
       <main className="flex-1">
