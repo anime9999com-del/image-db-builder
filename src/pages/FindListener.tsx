@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
+import { useRazorpay } from '@/hooks/useRazorpay';
 import { useNavigate } from 'react-router-dom';
 
 interface Listener {
@@ -35,6 +36,7 @@ export default function FindListener() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { initiatePayment, loading: paymentLoading } = useRazorpay();
 
   useEffect(() => {
     fetchListeners();
@@ -81,10 +83,29 @@ export default function FindListener() {
       return;
     }
 
-    // For now, show a toast - Razorpay integration will be added later
-    toast({
-      title: 'Booking initiated',
-      description: `${type === 'voice' ? 'Voice' : 'Video'} session with ${listener.name} - $${type === 'voice' ? listener.voice_price : listener.video_price}. Payment integration coming soon!`,
+    const amount = type === 'voice' ? listener.voice_price : listener.video_price;
+
+    initiatePayment({
+      listenerId: listener.id,
+      listenerName: listener.name,
+      bookingType: type,
+      amount,
+      userEmail: user.email || '',
+      userName: user.user_metadata?.full_name || user.email || '',
+      onSuccess: (bookingId) => {
+        toast({
+          title: 'Booking confirmed!',
+          description: `Your ${type} session with ${listener.name} has been booked successfully.`,
+        });
+        navigate('/bookings');
+      },
+      onError: (error) => {
+        toast({
+          title: 'Payment failed',
+          description: error,
+          variant: 'destructive',
+        });
+      },
     });
   };
 
