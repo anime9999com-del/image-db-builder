@@ -600,20 +600,26 @@ function ListenerForm({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Voice Price ($)</Label>
+          <Label>Voice Price (USD $)</Label>
           <Input 
             type="number"
             value={form.voice_price} 
-            onChange={(e) => setForm({ ...form, voice_price: parseInt(e.target.value) })}
+            onChange={(e) => setForm({ ...form, voice_price: parseInt(e.target.value) || 0 })}
           />
+          <p className="text-xs text-muted-foreground">
+            ≈ ₹{Math.round(form.voice_price * 83)} INR
+          </p>
         </div>
         <div className="space-y-2">
-          <Label>Video Price ($)</Label>
+          <Label>Video Price (USD $)</Label>
           <Input 
             type="number"
             value={form.video_price} 
-            onChange={(e) => setForm({ ...form, video_price: parseInt(e.target.value) })}
+            onChange={(e) => setForm({ ...form, video_price: parseInt(e.target.value) || 0 })}
           />
+          <p className="text-xs text-muted-foreground">
+            ≈ ₹{Math.round(form.video_price * 83)} INR
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
