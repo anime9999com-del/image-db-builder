@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Video, Phone } from 'lucide-react';
+import { Calendar, Clock, Video, Phone, ExternalLink } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { BackgroundEffects } from '@/components/BackgroundEffects';
@@ -14,11 +14,13 @@ interface Booking {
   status: string | null;
   scheduled_at: string | null;
   created_at: string;
+  meet_link: string | null;
   listeners: {
     name: string;
     tagline: string | null;
     avatar_color: string | null;
     initials: string;
+    currency: string;
   };
 }
 
@@ -45,7 +47,7 @@ export default function Bookings() {
       .from('bookings')
       .select(`
         *,
-        listeners (name, tagline, avatar_color, initials)
+        listeners (name, tagline, avatar_color, initials, currency)
       `)
       .eq('user_id', user?.id)
       .order('created_at', { ascending: false });
@@ -83,37 +85,55 @@ export default function Bookings() {
         ) : (
           <div className="space-y-4">
             {bookings.map((booking) => (
-              <div key={booking.id} className="glass-card p-6 flex items-center gap-4">
-                <div 
-                  className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-background shrink-0"
-                  style={{ backgroundColor: booking.listeners.avatar_color || '#38bdf8' }}
-                >
-                  {booking.listeners.initials}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">{booking.listeners.name}</h3>
-                  <p className="text-sm text-muted-foreground">{booking.listeners.tagline}</p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      {booking.booking_type === 'video' ? (
-                        <Video className="w-4 h-4" />
-                      ) : (
-                        <Phone className="w-4 h-4" />
-                      )}
-                      {booking.booking_type} call
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(booking.created_at).toLocaleDateString()}
+              <div key={booking.id} className="glass-card p-6">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-background shrink-0"
+                    style={{ backgroundColor: booking.listeners.avatar_color || '#38bdf8' }}
+                  >
+                    {booking.listeners.initials}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold">{booking.listeners.name}</h3>
+                    <p className="text-sm text-muted-foreground">{booking.listeners.tagline}</p>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        {booking.booking_type === 'video' ? (
+                          <Video className="w-4 h-4" />
+                        ) : (
+                          <Phone className="w-4 h-4" />
+                        )}
+                        {booking.booking_type} call
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(booking.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-semibold">
+                      {booking.listeners.currency === 'INR' ? '₹' : '$'}{booking.amount}
+                    </p>
+                    <span className={`inline-block px-2 py-1 rounded text-xs capitalize ${getStatusColor(booking.status)}`}>
+                      {booking.status}
                     </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold">${booking.amount}</p>
-                  <span className={`inline-block px-2 py-1 rounded text-xs capitalize ${getStatusColor(booking.status)}`}>
-                    {booking.status}
-                  </span>
-                </div>
+                {booking.meet_link && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <a 
+                      href={booking.meet_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      <Video className="w-4 h-4" />
+                      Join Google Meet
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
