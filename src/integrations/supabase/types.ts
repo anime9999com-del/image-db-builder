@@ -21,6 +21,7 @@ export type Database = {
           created_at: string | null
           id: string
           listener_id: string
+          meet_link: string | null
           payment_id: string | null
           scheduled_at: string | null
           status: string | null
@@ -32,6 +33,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           listener_id: string
+          meet_link?: string | null
           payment_id?: string | null
           scheduled_at?: string | null
           status?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           listener_id?: string
+          meet_link?: string | null
           payment_id?: string | null
           scheduled_at?: string | null
           status?: string | null
@@ -64,6 +67,7 @@ export type Database = {
           bio: string | null
           categories: string[] | null
           created_at: string | null
+          currency: string
           id: string
           initials: string
           is_active: boolean | null
@@ -80,6 +84,7 @@ export type Database = {
           bio?: string | null
           categories?: string[] | null
           created_at?: string | null
+          currency?: string
           id?: string
           initials: string
           is_active?: boolean | null
@@ -96,6 +101,7 @@ export type Database = {
           bio?: string | null
           categories?: string[] | null
           created_at?: string | null
+          currency?: string
           id?: string
           initials?: string
           is_active?: boolean | null

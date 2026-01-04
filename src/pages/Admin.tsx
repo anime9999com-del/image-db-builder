@@ -15,7 +15,11 @@ import {
   ShieldX,
   CreditCard,
   Eye,
-  EyeOff
+  EyeOff,
+  Calendar,
+  Video,
+  Phone,
+  Link
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +38,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Listener {
   id: string;
@@ -48,6 +59,26 @@ interface Listener {
   video_price: number;
   avatar_color: string | null;
   is_active: boolean | null;
+  currency: string;
+}
+
+interface Booking {
+  id: string;
+  booking_type: string;
+  amount: number;
+  status: string | null;
+  scheduled_at: string | null;
+  created_at: string;
+  meet_link: string | null;
+  listeners: {
+    name: string;
+    initials: string;
+    avatar_color: string | null;
+  };
+  profiles: {
+    full_name: string | null;
+    email: string | null;
+  };
 }
 
 interface SiteContent {
@@ -73,6 +104,7 @@ export default function Admin() {
   const [listeners, setListeners] = useState<Listener[]>([]);
   const [siteContent, setSiteContent] = useState<SiteContent[]>([]);
   const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingListener, setEditingListener] = useState<Listener | null>(null);
   const [editingContent, setEditingContent] = useState<SiteContent | null>(null);
@@ -112,6 +144,16 @@ export default function Admin() {
       .from('user_roles')
       .select('user_id, role');
 
+    // Fetch all bookings with listener and user info
+    const { data: bookingsData } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        listeners (name, initials, avatar_color),
+        profiles!bookings_user_id_fkey (full_name, email)
+      `)
+      .order('created_at', { ascending: false });
+
     // Combine profiles with role info
     const usersWithRoles: UserWithRole[] = (profilesData || []).map(profile => ({
       ...profile,
@@ -121,7 +163,22 @@ export default function Admin() {
     setListeners(listenersData || []);
     setSiteContent(contentData || []);
     setUsers(usersWithRoles);
+    setBookings((bookingsData || []) as unknown as Booking[]);
     setLoading(false);
+  };
+
+  const updateBookingMeetLink = async (bookingId: string, meetLink: string) => {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ meet_link: meetLink, status: 'confirmed' })
+      .eq('id', bookingId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Meet link saved and booking confirmed!' });
+      fetchData();
+    }
   };
 
   const toggleAdminRole = async (userProfile: UserWithRole) => {
@@ -255,6 +312,17 @@ export default function Admin() {
           >
             <Users className="w-5 h-5" />
             Listeners
+          </button>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+              activeTab === 'bookings' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            <Calendar className="w-5 h-5" />
+            Bookings
           </button>
           <button
             onClick={() => setActiveTab('content')}
@@ -505,6 +573,10 @@ export default function Admin() {
           </div>
         )}
 
+        {activeTab === 'bookings' && (
+          <BookingsTab bookings={bookings} onUpdateMeetLink={updateBookingMeetLink} />
+        )}
+
         {activeTab === 'settings' && (
           <PaymentSettings />
         )}
@@ -532,7 +604,10 @@ function ListenerForm({
     avatar_color: listener?.avatar_color || '#38bdf8',
     categories: listener?.categories?.join(', ') || '',
     is_active: listener?.is_active ?? true,
+    currency: listener?.currency || 'USD',
   });
+
+  const currencySymbol = form.currency === 'INR' ? '₹' : '$';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -598,28 +673,34 @@ function ListenerForm({
           placeholder="Career, Relationships"
         />
       </div>
+      <div className="space-y-2">
+        <Label>Currency</Label>
+        <Select value={form.currency} onValueChange={(value) => setForm({ ...form, currency: value })}>
+          <SelectTrigger className="bg-background">
+            <SelectValue placeholder="Select currency" />
+          </SelectTrigger>
+          <SelectContent className="bg-background z-50">
+            <SelectItem value="USD">🇺🇸 US Dollar ($)</SelectItem>
+            <SelectItem value="INR">🇮🇳 Indian Rupee (₹)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Voice Price (USD $)</Label>
+          <Label>Voice Price ({currencySymbol})</Label>
           <Input 
             type="number"
             value={form.voice_price} 
             onChange={(e) => setForm({ ...form, voice_price: parseInt(e.target.value) || 0 })}
           />
-          <p className="text-xs text-muted-foreground">
-            ≈ ₹{Math.round(form.voice_price * 83)} INR
-          </p>
         </div>
         <div className="space-y-2">
-          <Label>Video Price (USD $)</Label>
+          <Label>Video Price ({currencySymbol})</Label>
           <Input 
             type="number"
             value={form.video_price} 
             onChange={(e) => setForm({ ...form, video_price: parseInt(e.target.value) || 0 })}
           />
-          <p className="text-xs text-muted-foreground">
-            ≈ ₹{Math.round(form.video_price * 83)} INR
-          </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -686,6 +767,113 @@ function ContentForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function BookingsTab({ 
+  bookings, 
+  onUpdateMeetLink 
+}: { 
+  bookings: Booking[];
+  onUpdateMeetLink: (bookingId: string, meetLink: string) => void;
+}) {
+  const [meetLinks, setMeetLinks] = useState<Record<string, string>>({});
+
+  const getStatusColor = (status: string | null) => {
+    switch (status) {
+      case 'confirmed': return 'bg-success/20 text-success';
+      case 'completed': return 'bg-primary/20 text-primary';
+      case 'cancelled': return 'bg-destructive/20 text-destructive';
+      default: return 'bg-warning/20 text-warning';
+    }
+  };
+
+  const handleSaveMeetLink = (bookingId: string) => {
+    const link = meetLinks[bookingId];
+    if (link?.trim()) {
+      onUpdateMeetLink(bookingId, link.trim());
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Manage Bookings</h1>
+        <p className="text-sm text-muted-foreground">
+          {bookings.filter(b => b.status === 'pending').length} pending / {bookings.length} total
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {bookings.map((booking) => (
+          <div key={booking.id} className="glass-card p-6 space-y-4">
+            <div className="flex items-start gap-4">
+              <div 
+                className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-background shrink-0"
+                style={{ backgroundColor: booking.listeners?.avatar_color || '#38bdf8' }}
+              >
+                {booking.listeners?.initials || '?'}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">{booking.listeners?.name || 'Unknown Listener'}</h3>
+                  <span className={`px-2 py-1 rounded text-xs capitalize ${getStatusColor(booking.status)}`}>
+                    {booking.status || 'pending'}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  <p>User: {booking.profiles?.full_name || booking.profiles?.email || 'Unknown'}</p>
+                  <p className="flex items-center gap-2 mt-1">
+                    {booking.booking_type === 'video' ? (
+                      <Video className="w-4 h-4" />
+                    ) : (
+                      <Phone className="w-4 h-4" />
+                    )}
+                    {booking.booking_type} call • ${booking.amount}
+                    <span className="mx-2">•</span>
+                    <Calendar className="w-4 h-4" />
+                    {new Date(booking.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Meet Link Section */}
+            <div className="border-t border-border pt-4">
+              <Label className="text-sm mb-2 block">Google Meet Link</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                  value={meetLinks[booking.id] ?? booking.meet_link ?? ''}
+                  onChange={(e) => setMeetLinks({ ...meetLinks, [booking.id]: e.target.value })}
+                  className="flex-1"
+                />
+                <Button 
+                  size="sm" 
+                  onClick={() => handleSaveMeetLink(booking.id)}
+                  disabled={!meetLinks[booking.id]?.trim() || meetLinks[booking.id] === booking.meet_link}
+                >
+                  <Link className="w-4 h-4 mr-1" />
+                  Save & Confirm
+                </Button>
+              </div>
+              {booking.meet_link && (
+                <p className="text-xs text-success mt-2 flex items-center gap-1">
+                  <Link className="w-3 h-3" />
+                  Link sent: {booking.meet_link}
+                </p>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {bookings.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            No bookings yet
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
