@@ -64,6 +64,7 @@ interface Listener {
 
 interface Booking {
   id: string;
+  user_id: string;
   booking_type: string;
   amount: number;
   status: string | null;
@@ -74,11 +75,10 @@ interface Booking {
     name: string;
     initials: string;
     avatar_color: string | null;
+    currency: string;
   };
-  profiles: {
-    full_name: string | null;
-    email: string | null;
-  };
+  user_name?: string | null;
+  user_email?: string | null;
 }
 
 interface SiteContent {
@@ -144,13 +144,12 @@ export default function Admin() {
       .from('user_roles')
       .select('user_id, role');
 
-    // Fetch all bookings with listener and user info
+    // Fetch all bookings with listener info
     const { data: bookingsData } = await supabase
       .from('bookings')
       .select(`
         *,
-        listeners (name, initials, avatar_color),
-        profiles!bookings_user_id_fkey (full_name, email)
+        listeners (name, initials, avatar_color, currency)
       `)
       .order('created_at', { ascending: false });
 
@@ -160,10 +159,20 @@ export default function Admin() {
       isAdmin: rolesData?.some(r => r.user_id === profile.user_id && r.role === 'admin') || false
     }));
 
+    // Map bookings with user info from profiles
+    const bookingsWithUsers: Booking[] = (bookingsData || []).map(booking => {
+      const userProfile = profilesData?.find(p => p.user_id === booking.user_id);
+      return {
+        ...booking,
+        user_name: userProfile?.full_name || null,
+        user_email: userProfile?.email || null,
+      } as Booking;
+    });
+
     setListeners(listenersData || []);
     setSiteContent(contentData || []);
     setUsers(usersWithRoles);
-    setBookings((bookingsData || []) as unknown as Booking[]);
+    setBookings(bookingsWithUsers);
     setLoading(false);
   };
 
@@ -822,14 +831,14 @@ function BookingsTab({
                   </span>
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  <p>User: {booking.profiles?.full_name || booking.profiles?.email || 'Unknown'}</p>
+                  <p>User: {booking.user_name || booking.user_email || 'Unknown'}</p>
                   <p className="flex items-center gap-2 mt-1">
                     {booking.booking_type === 'video' ? (
                       <Video className="w-4 h-4" />
                     ) : (
                       <Phone className="w-4 h-4" />
                     )}
-                    {booking.booking_type} call • ${booking.amount}
+                    {booking.booking_type} call • {booking.listeners?.currency === 'INR' ? '₹' : '$'}{booking.amount}
                     <span className="mx-2">•</span>
                     <Calendar className="w-4 h-4" />
                     {new Date(booking.created_at).toLocaleDateString()}
