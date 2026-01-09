@@ -120,8 +120,10 @@ export default function Bookings() {
                     </span>
                   </div>
                 </div>
-                {booking.meet_link && (
-                  <div className="mt-4 pt-4 border-t border-border">
+                
+                {/* Google Meet Section - Always visible */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  {booking.meet_link ? (
                     <a 
                       href={booking.meet_link}
                       target="_blank"
@@ -132,8 +134,13 @@ export default function Bookings() {
                       Join Google Meet
                       <ExternalLink className="w-3 h-3" />
                     </a>
-                  </div>
-                )}
+                  ) : (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Video className="w-4 h-4" />
+                      <span>Meeting link will be provided soon by the listener</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
